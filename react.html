@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Zenwork</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="css/zenwork.css" media="all" />
+    </head>
+
+    <body>
+        <div id="zw-content"></div>
+
+        <script type="text/jsx">
+      React.render(
+        <h1>Hello, world!</h1>,
+        document.getElementById('zw-content')
+      );
+    </script>
+        
+        <script type="text/jsx">
+            var zwList = React.createClass({
+                getInitialState: function() {
+                    return { data: [] };
+                },
+                loadDataFromServer: function() {
+                    var queryString = window.location.search;
+                    queryString = queryString.substring( queryString.indexOf('?')+1 );
+                    var dataUrl = queryString.split('=')[1];
+
+                    $.ajax({
+                        url: dataUrl,
+                        dataType: 'json',
+                        cache: false,
+                        success: function(data) {
+                            this.setState({data: data});
+                        }.bind(this),
+                        error: function(xhr, status, err) {
+                            console.error(this.props.url, status, err.toString());
+                        }.bind(this)
+                    });
+                },
+                componentDidMount: function() { //default call when rendered
+                    this.loadDataFromServer();
+                    setInterval(this.loadDataFromServer, this.props.pollInterval);
+                },
+                render: function() {
+                    return (
+                        <ul id="zw-list" class="zw-list">
+                            {this.props.data.map(function(milestone) {
+                                return <li class="zw-milestone"><zwMilestone data={ milestone } /></li>;
+                            })}
+                        </ul>
+                    );
+                }
+            });
+            var zwMilestone = React.createClass({
+                render: function() {
+                    return (
+                        <div class="zw-milestone">
+                            <a href="#" title="">{ this.props.name }</a>
+                        </div>
+                    );
+                }
+            });
+            var zwDeliverable = React.createClass({
+                render: function() {
+                    return (
+                        <div class="zw-deliverable">
+                            <a href="#" title="">{ this.props.name }</a>
+                        </div>
+                    );
+                }
+            });
+            var zwTask = React.createClass({
+                render: function() {
+                    return (
+                        <div class="zw-task">
+                            <a href="#" title="">{ this.props.name }</a>
+                        </div>
+                    );
+                }
+            });
+
+            //entry
+            React.render(
+                <zwList pollInterval={ 5000 } />,
+                document.getElementById('zw-content')
+            );
+        </script>
+
+        <script type="text/javascript" src="js/jquery2.min.js"></script>
+        <script type="text/javascript" src="js/react.min.js"></script>
+        <script type="text/javascript" src="js/utils.js"></script>
+        <script type="text/javascript" src="js/zenwork.js"></script>
+    </body>
+</html>

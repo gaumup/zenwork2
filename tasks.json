@@ -1,0 +1,103 @@
+{
+    "tasks": [
+        {
+            "id": "T-4948",
+            "name": "Sketch wireframe",
+            "from": "01-09-2015",
+            "dueDate": "02-09-2015",
+            "effort": "1 day",
+            "status": 2,
+            "assign": "VuLH"
+        },
+        {
+            "id": "T-9848",
+            "name": "Get feedbacks from client",
+            "from": "02-09-2015",
+            "dueDate": "03-09-2015",
+            "effort": "1 day",
+            "status": 2,
+            "assign": "KhoaNT"
+        },
+        {
+            "id": "T-5908",
+            "name": "Coding HTML master page",
+            "from": "04-09-2015",
+            "dueDate": "06-09-2015",
+            "effort": "2 days",
+            "status": 0,
+            "assign": "KhoaNT"
+        },
+        {
+            "id": "T-3451",
+            "name": "Designing UI",
+            "from": "20-09-2015",
+            "dueDate": "22-09-2015",
+            "effort": "2 days",
+            "status": 1,
+            "assign": "VuLH"
+        },
+        {
+            "id": "T-5751",
+            "name": "Get feedbacks from client",
+            "from": "22-09-2015",
+            "dueDate": "23-09-2015",
+            "effort": "1 day",
+            "status": 0,
+            "assign": "KhoaNT"
+        },
+        {
+            "id": "T-3081",
+            "name": "Coding HTML master page",
+            "from": "24-09-2015",
+            "dueDate": "28-09-2015",
+            "effort": "4 days",
+            "status": 0,
+            "assign": "KhoaNT"
+        },
+        {
+            "id": "T-9876",
+            "name": "Coding HTML master page",
+            "from": "29-09-2015",
+            "dueDate": "30-09-2015",
+            "effort": "1 day",
+            "status": 0,
+            "assign": "KhoaNT"
+        },
+        {
+            "id": "T-4936",
+            "name": "Designing UI",
+            "from": "20-09-2015",
+            "dueDate": "22-09-2015",
+            "effort": "2 days",
+            "status": 1,
+            "assign": "VuLH"
+        },
+        {
+            "id": "T-3936",
+            "name": "Get feedbacks from client",
+            "from": "22-09-2015",
+            "dueDate": "23-09-2015",
+            "effort": "1 day",
+            "status": 0,
+            "assign": "KhoaNT"
+        },
+        {
+            "id": "T-2236",
+            "name": "Coding HTML master page",
+            "from": "24-09-2015",
+            "dueDate": "28-09-2015",
+            "effort": "4 days",
+            "status": 0,
+            "assign": "KhoaNT"
+        },
+        {
+            "id": "T-9036",
+            "name": "Coding HTML master page",
+            "from": "29-09-2015",
+            "dueDate": "30-09-2015",
+            "effort": "1 day",
+            "status": 0,
+            "assign": "KhoaNT"
+        }
+    ]
+}

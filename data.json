@@ -1,0 +1,95 @@
+{
+    "milestones": [
+        {
+            "id": "M-3451",
+            "name": "Milestone 1: Shipping the master page",
+            "dueDate": "04-09-2015",
+            "effort": "6 days",
+            "status": 1,
+            "deliverables": [
+                {
+                    "id": "D-5948",
+                    "name": "Delivery 1: Finished wireframe for master page",
+                    "dueDate": "04-09-2015",
+                    "effort": "4 days",
+                    "status": 2,
+                    "tasks": 2
+                },
+                {
+                    "id": "D-6765",
+                    "name": "Delivery 2: Finished coding HTML master page",
+                    "dueDate": "12-09-2015",
+                    "effort": "8 days",
+                    "status": 0,
+                    "tasks": 1
+                }
+            ]
+        },
+        {
+            "id": "M-7654",
+            "name": "Milestone 2: Deploying user pages",
+            "dueDate": "20-09-2015",
+            "effort": "12 days",
+            "status": 0,
+            "deliverables": [
+                {
+                    "id": "D-8765",
+                    "name": "Delivery 1: Finished design UI for all user pages",
+                    "dueDate": "30-09-2015",
+                    "effort": "6 days",
+                    "status": 1,
+                    "tasks": 2
+                },
+                {
+                    "id": "D-4451",
+                    "name": "Delivery 2: Finished coding all user page",
+                    "dueDate": "28-09-2015",
+                    "effort": "8 days",
+                    "status": 0,
+                    "tasks": 2
+                },
+                {
+                    "id": "D-7654",
+                    "name": "Delivery 3: Deploying all user page",
+                    "dueDate": "30-09-2015",
+                    "effort": "1 days",
+                    "status": 0,
+                    "tasks": 1
+                }
+            ]
+        },
+        {
+            "id": "M-4736",            
+            "name": "Milestone 3: Provide full document",
+            "dueDate": "20-09-2015",
+            "effort": "12 days",
+            "status": 0,
+            "deliverables": [
+                {
+                    "id": "D-3736",
+                    "name": "Delivery 1: Finished design UI for all user pages",
+                    "dueDate": "30-09-2015",
+                    "effort": "6 days",
+                    "status": 1,
+                    "tasks": 2
+                },
+                {
+                    "id": "D-3456",
+                    "name": "Delivery 2: Finished coding all user page",
+                    "dueDate": "28-09-2015",
+                    "effort": "8 days",
+                    "status": 0,
+                    "tasks": 1
+                },
+                {
+                    "id": "D-3336",
+                    "name": "Delivery 3: Deploying all user page",
+                    "dueDate": "30-09-2015",
+                    "effort": "1 days",
+                    "status": 0,
+                    "tasks": 1
+                }
+            ]
+        }
+    ]
+}
