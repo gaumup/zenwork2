@@ -68,20 +68,19 @@ a:hover {
 }
     .zw-text-ellipsis em {
         display: block;
-        width: 85%;
+        max-width: 80%;
         white-space: nowrap;
         overflow: hidden;
         font-style: normal;
         text-overflow: ellipsis;
+        float: left;
     }
     .zw-text-ellipsis a {
-        width: 15%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        right: 0;
         display: block;
-        padding: 0;
+        width: 30px;
+        height: 40px;
+        float: left;
+        position: relative;
     }
     .zw-text-ellipsis a:after {
         content: "i";
@@ -106,8 +105,30 @@ a:hover {
         line-height: 18px;
     }
 h1 {
-    display: none;
+    width: 45px;
+    height: 100%;
+    padding: 0 15px;
+    float: left;
+    overflow: hidden;
+    line-height: 34px;
+    position: relative;
+    text-indent: -1000em;
 }
+    h1:after {
+        text-indent: 0;
+        text-align: center;
+        line-height: 22px;
+        font-size: 26px;
+        content: 'z';
+        width: 30px;
+        height: 30px;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: auto;
+    }
 .zw-avatar {
     width: 30px;
     height: 30px;
@@ -129,7 +150,7 @@ h1 {
         background: #008844;
         color: #fff;
         position: fixed;
-        bottom: 0;
+        top: 0;
         left: 0;
         width: 100%;
         height: 40px;
@@ -137,7 +158,7 @@ h1 {
         line-height: 40px;
     }
     .zw-main-nav {
-        width: 100%;
+        width: calc( 100% - 45px);
         height: 100%;
         overflow: hidden;
     }
@@ -157,10 +178,14 @@ h1 {
                 position: relative;
             }
             .zw-main-nav li.zw-main-nav__item--active a {
-                background: #116644;
+                /*background: #116644;*/
+                background: #fff;
             }
             .zw-main-nav li a .svg-icon path {
                 fill: #fff;
+            }
+            .zw-main-nav li.zw-main-nav__item--active a .svg-icon path {
+                fill: #008844;
             }
             .zw-main-nav li a .zw-avatar {
                 position: absolute;
@@ -183,7 +208,7 @@ h1 {
         width: 100%;
         height: 100%;
         overflow: auto;
-        padding-bottom: 40px;
+        padding-top: 40px;
         background: #fff;
 
         -webkit-transition: -webkit-transform 0.2s ease-in;
@@ -221,12 +246,12 @@ h1 {
         position: relative;
         padding: 0;
         font-size: 16px;
-        background: #efefef;
+        background: #fff;
         color: #000;
         width: 100%;
-        height: 30px;
+        height: 40px;
         z-index: 1000;
-        line-height: 30px;
+        line-height: 40px;
     }
     .zw-project h2 > .zw-back {
         display: block;
@@ -239,6 +264,9 @@ h1 {
         width: calc( 100% - 40px );
         float: left;
     }
+        .zw-project h2 .zw-text-ellipsis em {
+            width: calc( 100% - 40px - 30px );
+        }
     .zw-project h2.zw-first-page-title .zw-text-ellipsis {
         width: 100%;
         padding: 0 0 0 10px;
@@ -250,95 +278,133 @@ h1 {
         .zw-project h2 > .zw-back .svg-icon path {
             fill: #000;
         }
-    .zw-list {
+
+    .zw-project-list {
         width: 100%;
-        min-height: calc( 100% - 30px );
-        position: relative;
+        overflow: hidden;
     }
-    .zw-list:after {
-        content: " ";
-        position: absolute;
-        top: 0;
-        left: 0;
-        border-right: 3px solid #efefef;
-        width: 80px;
-        height: 100%;
-    }
-    .zw-list li {
-        position: relative;
-    }
-    .zw-list a {
-        display: block;
-        color: #333;
-        font-size: 16px;
-        position: relative;
-        z-index: 1;
-    }
-    .zw-list .zw-timeline-date {
-        position: absolute;
-        left: 10px;
-        top: 0;
-        z-index: 0;
-        padding: 22px 15px 0 0;
-        font-size: 12px;
-        color: #ccc;
-        display: block;
-        width: 65px;
-        height: 100%;
-        text-align: right;
-        text-transform: uppercase;
-    }
-    .zw-list .zw-item-status,
-    .zw-list .zw-item-status:before {
-        display: block;
-        position: absolute;
-        border-radius: 100%;
-        -webkit-border-radius: 100%;
-        -moz-border-radius: 100%;
-    }
-    .zw-list .zw-item-status {
-        z-index: 2;
-    }
-    .zw-list .zw-item-status:before {
-        content: " ";
-    }
+        .zw-project-list li {
+            width: 100%;
+            float: left;
+            border-bottom: 3px solid #efefef;
+        }
+            .zw-project-list li a {
+                color: #000;
+                display: block;
+                width: 100%;
+                padding: 15px 45px 15px 15px;
+                font-size: 16px;
+                position: relative;
+            }
+            .zw-project-list li a .svg-icon {
+                width: 30px;
+                height: 100%;
+                position: absolute;
+                left: auto;
+                right: 5px;
+                top: 0;
+                bottom: auto;
+            }
+                .zw-project-list li a .svg-icon path {
+                    fill: #ccc;
+                }
+
+    /**
+     * List with timeline
+     */
+        .zw-list {
+            width: 100%;
+            min-height: calc( 100% - 30px );
+            position: relative;
+            background: #f8f8f8;
+            border-top: 3px solid #efefef;
+        }
+        .zw-list:after {
+            content: " ";
+            position: absolute;
+            z-index: 0;
+            top: 0;
+            left: 0;
+            border-right: 3px solid #efefef;
+            width: 80px;
+            height: 100%;
+        }
+        .zw-list li {
+            position: relative;
+        }
+        .zw-list a {
+            display: block;
+            color: #333;
+            font-size: 16px;
+            position: relative;
+            z-index: 1;
+        }
+        .zw-list .zw-timeline-date {
+            position: absolute;
+            left: 10px;
+            top: 0;
+            z-index: 0;
+            padding: 22px 15px 0 0;
+            font-size: 12px;
+            color: #ccc;
+            display: block;
+            width: 65px;
+            height: 100%;
+            text-align: right;
+            text-transform: uppercase;
+        }
+        .zw-list .zw-item-status,
+        .zw-list .zw-item-status:before {
+            display: block;
+            position: absolute;
+            border-radius: 100%;
+            -webkit-border-radius: 100%;
+            -moz-border-radius: 100%;
+        }
+        .zw-list .zw-item-status {
+            z-index: 2;
+        }
+        .zw-list .zw-item-status:before {
+            content: " ";
+        }
 
         /*
          * Milestone
          */
-        .zw-list .zw-milestone {
-        }
-            .zw-list .zw-milestone .zw-timeline-date {
-                font-weight: bold;
+            .zw-list .zw-milestone {
+                border-bottom: 3px solid #efefef;
             }
-            .zw-list .zw-milestone .zw-item-status {
-                top: 14px;
-                left: 65px;
-                width: 31px;
-                height: 31px;
-                border: 1px solid transparent;
-            }
-            .zw-list .zw-milestone > .zw-item-status.zw-item-status--0 {
-                border: 1px solid #ccc;
-                background: #fff;
-            }
-            .zw-list .zw-milestone > .zw-item-status.zw-item-status--1 {
-                background: #ff7799;
-            }
-            .zw-list .zw-milestone > .zw-item-status.zw-item-status--2 {
-                background: #fff;
-                border-color: #008844;
-            }
-            .zw-list .zw-milestone > .zw-item-status.zw-item-status--2 .svg-icon path {
-                fill: #008844;
-            }
-            .zw-list .zw-milestone .zw-item-status:before {
-                display: none;
-            }
-            .zw-list .zw-milestone > .zw-item-name {
-                padding: 20px 15px 20px 105px;
-                font-weight: bold;
-            }
+                .zw-list .zw-milestone .zw-timeline-date {
+                    font-weight: bold;
+                }
+                .zw-list .zw-milestone .zw-item-status {
+                    top: 14px;
+                    left: 65px;
+                    width: 31px;
+                    height: 31px;
+                    border: 1px solid transparent;
+                }
+                .zw-list .zw-milestone > .zw-item-status.zw-item-status--0 {
+                    border: 1px solid #ccc;
+                    background: #fff;
+                }
+                .zw-list .zw-milestone > .zw-item-status.zw-item-status--1 {
+                    background: #ff7799;
+                }
+                .zw-list .zw-milestone > .zw-item-status.zw-item-status--2 {
+                    background: #fff;
+                    border-color: #008844;
+                }
+                .zw-list .zw-milestone > .zw-item-status.zw-item-status--2 .svg-icon path {
+                    fill: #008844;
+                }
+                .zw-list .zw-milestone .zw-item-status:before {
+                    display: none;
+                }
+                .zw-list .zw-milestone > .zw-item-name {
+                    padding: 20px 15px 20px 105px;
+                    font-weight: bold;
+                }
 
         /*
          * Deliverable
@@ -384,38 +450,47 @@ h1 {
         /*
          * Task
          */
-        .zw-list .zw-task {
-        }
-            .zw-list .zw-task .zw-timeline-date {
-                font-weight: bold;
+            .zw-list.zw-tasks-list li {
+                z-index: 1;
             }
-            .zw-list .zw-task .zw-item-status {
-                top: 14px;
-                left: 65px;
-                width: 31px;
-                height: 31px;
-                border: 1px solid transparent;
-            }
-            .zw-list .zw-task > .zw-item-status.zw-item-status--0 {
-                background: #ccc;
-            }
-            .zw-list .zw-task > .zw-item-status.zw-item-status--1 {
-                background: #ff7799;
-            }
-            .zw-list .zw-task > .zw-item-status.zw-item-status--2 {
-                background: #fff;
-                border-color: #008844;
-            }
-            .zw-list .zw-task > .zw-item-status.zw-item-status--2 .svg-icon path {
-                fill: #008844;
-            }
-            .zw-list .zw-task .zw-item-status:before {
-                display: none;
-            }
-            .zw-list .zw-task > .zw-item-name {
-                padding: 20px 15px 20px 105px;
-                font-weight: bold;
-            }
+                .zw-list .zw-task .zw-timeline-date {
+                    font-weight: bold;
+                }
+                .zw-list .zw-task .zw-item-status {
+                    top: 14px;
+                    left: 65px;
+                    width: 31px;
+                    height: 31px;
+                    border: 1px solid transparent;
+                }
+                .zw-list .zw-task > .zw-item-status.zw-item-status--0 {
+                    border: 1px solid #ccc;
+                    background: #fff;
+                }
+                .zw-list .zw-task > .zw-item-status.zw-item-status--1 {
+                    background: #ff7799;
+                }
+                .zw-list .zw-task > .zw-item-status.zw-item-status--2 {
+                    background: #fff;
+                    border-color: #008844;
+                }
+                .zw-list .zw-task > .zw-item-status.zw-item-status--2 .svg-icon path {
+                    fill: #008844;
+                }
+                .zw-list .zw-task .zw-item-status:before {
+                    display: none;
+                }
+                .zw-list .zw-task > .zw-item-name {
+                    padding: 20px 15px 20px 105px;
+                    font-weight: bold;
+                }
+                .zw-task__details {
+                    background: #fff;
+                    padding: 15px;
+                    border-top: 3px solid #efefef;
+                    border-bottom: 3px solid #efefef;
+                }
+
 
 
 
