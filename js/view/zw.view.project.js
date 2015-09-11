@@ -39,11 +39,16 @@
         },
         render: function render() {
             var items = this.state.items.map((function (item, i) {
-                return React.createElement(ZWPage, { backLink: item.backLink, key: item.key, display: item.display, showHeader: item.showHeader, headerTitle: item.headerTitle, content: item.content, customClass: item.customClass });
+                return React.createElement(ZWPage, { backLink: item.backLink, key: item.key, display: item.display, showHeader: item.showHeader, headerTitle: item.headerTitle, content: item.content, customClass: item.customClass, expandContent: item.expandContent });
             }).bind(this));
             return React.createElement(
                 ReactTransitionGroup,
                 { className: 'zw-page-transition', transitionName: 'fly-in' },
+                React.createElement(
+                    'div',
+                    { className: 'zw-spin' },
+                    React.createElement(SVGIconLoading, null)
+                ),
                 items
             );
         }
@@ -51,37 +56,42 @@
     var ZWPage = React.createClass({
         displayName: 'ZWPage',
 
+        loadingInterval: undefined,
         getInitialState: function getInitialState() {
-            return {};
+            return { expandContent: false };
         },
-        back: function back(e) {},
-        componentWillUnmount: function componentWillUnmount() {},
-        componentWillEnter: function componentWillEnter(callback) {
+        componentDidMount: function componentDidMount() {
             var node = $(React.findDOMNode(this));
-            node.addClass('fly-in-enter');
-            setTimeout(function () {
-                node.removeClass('fly-in-enter').addClass('fly-in-enter-active');
-            }, 1);
+            node.parent().addClass('zw-page-loading');
+        },
+        componentWillEnter: function componentWillEnter(callback) {
             setTimeout(function () {
                 callback();
             }, 200);
         },
         componentDidEnter: function componentDidEnter() {
             var node = $(React.findDOMNode(this));
-            node.removeClass('fly-in-enter-active');
-        },
-        componentWillLeave: function componentWillLeave(callback) {
-            var node = $(React.findDOMNode(this));
-            node.addClass('fly-in-leave');
-            setTimeout(function () {
-                node.removeClass('fly-in-leave').addClass('fly-in-leave-active');
-            }, 1);
-            setTimeout(function () {
-                callback();
-            }, 200);
-        },
-        componentDidLeave: function componentDidLeave() {
-            ZWPubSub.pub('ZWPage:leave');
+            node.addClass('fly-in-enter').parent().removeClass('zw-page-loading');
+
+            //binding waves effect when click on link
+            $('.zw-waves').on('click', function (e) {
+                e.preventDefault();
+
+                var $this = $(this);
+                $this.addClass('zw-waves--clicked');
+                setTimeout(function () {
+                    $this.removeClass('zw-waves--clicked');
+                    var href = $this.attr('href');
+                    if (href !== '' && href !== '#') {
+                        window.location = href;
+                    }
+                }, 200);
+            });
+
+            //listen for events
+            ZWPubSub.sub('ZWTextEllipsis:toggle', (function (e) {
+                this.setState({ expandContent: !this.state.expandContent });
+            }).bind(this));
         },
         render: function render() {
             var header = this.props.showHeader ? React.createElement(
@@ -89,38 +99,61 @@
                 { className: this.props.backLink === undefined ? 'zw-first-page-title' : '' },
                 this.props.backLink === undefined ? null : React.createElement(
                     'a',
-                    { href: this.props.backLink, title: '', className: 'zw-back', onClick: this.back },
+                    { href: this.props.backLink, title: '', className: 'zw-back' },
                     React.createElement(SVGIconBack, null)
                 ),
                 React.createElement(ZWTextEllipsis, { text: this.props.headerTitle === undefined ? '' : this.props.headerTitle })
             ) : null;
+            var expandContent = this.state.expandContent ? this.props.expandContent : null;
             return React.createElement(
                 'div',
                 { key: this.props.key, className: 'zw-page' + (this.props.customClass === undefined ? '' : ' ' + this.props.customClass) },
                 header,
-                this.props.content
+                React.createElement(
+                    'div',
+                    { className: 'zw-page-content-dissolve' + (this.state.expandContent ? ' zw-page-content-dissolve--out' : '') },
+                    expandContent
+                ),
+                React.createElement(
+                    'div',
+                    { className: 'zw-page-content-slide-fade' + (this.state.expandContent ? ' zw-page-content-slide-fade--down' : '') },
+                    this.props.content
+                )
             );
         }
     });
     /* end. Control */
 
     /* Page */
-    var ZWProjectDashboard = React.createClass({
-        displayName: 'ZWProjectDashboard',
+    var ZWMasterPage = React.createClass({
+        displayName: 'ZWMasterPage',
+
+        render: function render() {
+            return React.createElement(
+                'div',
+                null,
+                React.createElement(ZWNavBar, { active: this.props.active, uid: '1' }),
+                React.createElement(ZWPageGroup, null),
+                React.createElement(ZWNav, { active: this.props.active })
+            );
+        }
+    });
+    var ZWProjectDashboardPage = React.createClass({
+        displayName: 'ZWProjectDashboardPage',
 
         init: false,
         dataInterval: undefined,
         loadDataFromServer: function loadDataFromServer() {
             $.ajax({
-                url: this.props.url,
+                url: this.props.data.url,
                 dataType: 'json',
                 cache: false,
-                success: (function (data) {
+                success: (function (response) {
                     var data = {
-                        key: this.props.id,
+                        key: this.props.data.id,
                         showHeader: false,
                         headerTitle: '',
-                        content: React.createElement(ZWProjectList, { data: data.projects }),
+                        content: React.createElement(ZWProjectList, { data: response.projects }),
                         customClass: ''
                     };
                     if (!this.init) {
@@ -139,39 +172,42 @@
         componentDidMount: function componentDidMount() {
             //default call when rendered
             this.loadDataFromServer();
-            if (this.props.pollInterval > 0) {
-                this.dataInterval = setInterval(this.loadDataFromServer, this.props.pollInterval);
+            if (this.props.data.pollInterval > 0) {
+                this.dataInterval = setInterval(this.loadDataFromServer, this.props.data.pollInterval);
                 ZWPubSub.sub('ZWPage:leave', (function () {
                     clearInterval(this.dataInterval);
                 }).bind(this));
             }
         },
         render: function render() {
-            return React.createElement(
-                'div',
-                null,
-                React.createElement(ZWNavBar, { active: '0' }),
-                React.createElement(ZWPageGroup, null)
-            );
+            return React.createElement(ZWMasterPage, { active: '0' });
         }
     });
-    var ZWProject = React.createClass({
-        displayName: 'ZWProject',
+    var ZWMilestonePage = React.createClass({
+        displayName: 'ZWMilestonePage',
 
         init: false,
         dataInterval: undefined,
         loadDataFromServer: function loadDataFromServer() {
             $.ajax({
-                url: this.props.url,
+                url: this.props.data.url,
                 dataType: 'json',
                 cache: false,
-                success: (function (data) {
+                success: (function (response) {
+                    var projectData = {
+                        id: this.props.data.id,
+                        from: this.props.data.from,
+                        name: this.props.data.name,
+                        pm: this.props.data.pm,
+                        note: this.props.data.note
+                    };
                     var data = {
                         backLink: this.props.backLink,
-                        key: this.props.id,
+                        key: this.props.data.id,
                         showHeader: true,
-                        headerTitle: this.props.name,
-                        content: React.createElement(ZWList, { data: data.milestones }),
+                        headerTitle: this.props.data.name,
+                        content: React.createElement(ZWList, { data: response.milestones }),
+                        expandContent: React.createElement(ZWProjectInfo, { data: projectData }),
                         customClass: ''
                     };
                     if (!this.init) {
@@ -190,39 +226,42 @@
         componentDidMount: function componentDidMount() {
             //default call when rendered
             this.loadDataFromServer();
-            if (this.props.pollInterval > 0) {
-                this.dataInterval = setInterval(this.loadDataFromServer, this.props.pollInterval);
+            if (this.props.data.pollInterval > 0) {
+                this.dataInterval = setInterval(this.loadDataFromServer, this.props.data.pollInterval);
                 ZWPubSub.sub('ZWPage:leave', (function () {
                     clearInterval(this.dataInterval);
                 }).bind(this));
             }
         },
         render: function render() {
-            return React.createElement(
-                'div',
-                null,
-                React.createElement(ZWNavBar, { active: '0' }),
-                React.createElement(ZWPageGroup, null)
-            );
+            return React.createElement(ZWMasterPage, { active: '0' });
         }
     });
-    var ZWDeliverableList = React.createClass({
-        displayName: 'ZWDeliverableList',
+    var ZWDeliverablePage = React.createClass({
+        displayName: 'ZWDeliverablePage',
 
         init: false,
         dataInterval: undefined,
         loadDataFromServer: function loadDataFromServer() {
             $.ajax({
-                url: this.props.url,
+                url: this.props.data.url,
                 dataType: 'json',
                 cache: false,
-                success: (function (data) {
+                success: (function (response) {
+                    var deliverableData = {
+                        id: this.props.data.id,
+                        dueDate: this.props.data.dueDate,
+                        name: this.props.data.name,
+                        effort: this.props.data.effort,
+                        note: this.props.data.note
+                    };
                     var data = {
                         backLink: this.props.backLink,
-                        key: this.props.id,
+                        key: this.props.data.id,
                         showHeader: true,
-                        headerTitle: this.props.name,
-                        content: React.createElement(ZWTaskList, { url: this.props.url, pollInterval: this.props.pollInterval }),
+                        headerTitle: this.props.data.name,
+                        content: React.createElement(ZWTaskList, { data: response.tasks }),
+                        expandContent: React.createElement(ZWDeliverableInfo, { data: deliverableData }),
                         customClass: ''
                     };
                     if (!this.init) {
@@ -234,81 +273,99 @@
                     }
                 }).bind(this),
                 error: (function (xhr, status, err) {
-                    console.error(this.props.url, status, err.toString());
+                    console.error(this.props.data.url, status, err.toString());
                 }).bind(this)
             });
         },
         componentDidMount: function componentDidMount() {
             //default call when rendered
             this.loadDataFromServer();
-            if (this.props.pollInterval > 0) {
-                this.dataInterval = setInterval(this.loadDataFromServer, this.props.pollInterval);
+            if (this.props.data.pollInterval > 0) {
+                this.dataInterval = setInterval(this.loadDataFromServer, this.props.data.pollInterval);
                 ZWPubSub.sub('ZWPage:leave', (function () {
                     clearInterval(this.dataInterval);
                 }).bind(this));
             }
         },
         render: function render() {
-            return React.createElement(
-                'div',
-                null,
-                React.createElement(ZWNavBar, { active: '0' }),
-                React.createElement(ZWPageGroup, null)
-            );
+            return React.createElement(ZWMasterPage, { active: '0' });
         }
     });
-    var ZWTaskList = React.createClass({
-        displayName: 'ZWTaskList',
+    var ZWChatPage = React.createClass({
+        displayName: 'ZWChatPage',
 
-        taskInterval: undefined,
-        getInitialState: function getInitialState() {
-            return { data: [] };
-        },
+        init: false,
+        dataInterval: undefined,
         loadDataFromServer: function loadDataFromServer() {
             $.ajax({
-                url: this.props.url,
+                url: this.props.data.url,
                 dataType: 'json',
                 cache: false,
-                success: (function (data) {
-                    this.setState({ data: data.tasks });
+                success: (function (response) {
+                    var data = {
+                        key: this.props.data.id,
+                        showHeader: false,
+                        content: React.createElement(ZWChat, { data: response })
+                    };
+                    if (!this.init) {
+                        this.init = true;
+                        ZWPubSub.pub('ZWPageGroup:add', data);
+                    } else {
+                        //update
+                        ZWPubSub.pub('ZWPageGroup:update', data);
+                    }
                 }).bind(this),
                 error: (function (xhr, status, err) {
-                    console.error(this.props.url, status, err.toString());
+                    console.error(this.props.data.url, status, err.toString());
                 }).bind(this)
             });
         },
         componentDidMount: function componentDidMount() {
             //default call when rendered
             this.loadDataFromServer();
-            if (this.props.pollInterval > 0) {
-                this.dataInterval = setInterval(this.loadDataFromServer, this.props.pollInterval);
+            if (this.props.data.pollInterval > 0) {
+                this.dataInterval = setInterval(this.loadDataFromServer, this.props.data.pollInterval);
                 ZWPubSub.sub('ZWPage:leave', (function () {
                     clearInterval(this.dataInterval);
                 }).bind(this));
             }
         },
         render: function render() {
-            var tasks = this.state.data.map(function (taskItem) {
-                return React.createElement(
-                    'li',
-                    { key: taskItem.id },
-                    React.createElement(ZWTask, { data: taskItem })
-                );
-            });
-
-            return React.createElement(
-                'ul',
-                { className: 'zw-list zw-tasks-list' },
-                tasks
-            );
+            return React.createElement(ZWMasterPage, { active: '1' });
         }
     });
     /* end. Page */
 
     /* Block/Instance */
+    var ZWChat = React.createClass({
+        displayName: 'ZWChat',
+
+        render: function render() {
+            return React.createElement(
+                'div',
+                { className: 'zw-chat-app' },
+                React.createElement(SVGIconMessage, null),
+                React.createElement(
+                    'p',
+                    null,
+                    ZWUtils.locale('Comming soon', 'us')
+                )
+            );
+        }
+    });
+
     var ZWTextEllipsis = React.createClass({
         displayName: 'ZWTextEllipsis',
 
+        getInitialState: function getInitialState() {
+            return { expand: false };
+        },
+        handleClick: function handleClick(e) {
+            e.preventDefault();
+
+            this.setState({ expand: !this.state.expand });
+            ZWPubSub.pub('ZWTextEllipsis:toggle');
+        },
         render: function render() {
             return React.createElement(
                 'span',
@@ -318,7 +375,7 @@
                     null,
                     this.props.text
                 ),
-                React.createElement('a', { href: '#', title: '' })
+                React.createElement('a', { href: '#', title: '', onClick: this.handleClick, className: this.state.expand ? 'active' : '' })
             );
         }
     });
@@ -341,7 +398,7 @@
                     { className: 'zw-main-nav__item' + (this.state.active === '0' ? ' zw-main-nav__item--active' : '') },
                     React.createElement(
                         'a',
-                        { href: '', title: 'Project' },
+                        { href: '#!/' + this.props.uid, title: 'Project' },
                         React.createElement(SVGIconProject, null)
                     )
                 ),
@@ -350,17 +407,8 @@
                     { className: 'zw-main-nav__item' + (this.state.active === '1' ? ' zw-main-nav__item--active' : '') },
                     React.createElement(
                         'a',
-                        { href: '', title: 'Message' },
+                        { href: '#!chat/' + this.props.uid, title: 'Message' },
                         React.createElement(SVGIconMessage, null)
-                    )
-                ),
-                React.createElement(
-                    'li',
-                    { className: 'zw-main-nav__item zw-main-nav__item--alt' },
-                    React.createElement(
-                        'a',
-                        { href: '', title: '' },
-                        React.createElement(SVGIconAvatar, { image: 'images/avatar.jpg' })
                     )
                 )
             );
@@ -379,7 +427,37 @@
                     null,
                     'zenwork'
                 ),
-                React.createElement(ZWNav, { active: this.props.active })
+                React.createElement(ZWSearchBar, null),
+                React.createElement(
+                    'a',
+                    { className: 'zw-avatar-wrapper', href: '#!/1', title: '' },
+                    React.createElement(SVGIconAvatar, { image: 'images/avatar.jpg' })
+                )
+            );
+        }
+    });
+
+    var ZWSearchBar = React.createClass({
+        displayName: 'ZWSearchBar',
+
+        handleSubmit: function handleSubmit(e) {
+            e.preventDefault();
+        },
+        render: function render() {
+            return React.createElement(
+                'div',
+                { className: 'zw-search-bar' },
+                React.createElement(
+                    'form',
+                    { action: '', method: 'post', onSubmit: this.handleSubmit },
+                    React.createElement(ZWFormRow, { fieldType: 'text', fieldName: 'zw-field-search', fieldId: 'zw-field-search', placeholder: 'Search' }),
+                    React.createElement(
+                        'div',
+                        { className: 'zw-clear-field' },
+                        React.createElement('button', { type: 'reset' }),
+                        React.createElement(SVGIconRemove, null)
+                    )
+                )
             );
         }
     });
@@ -394,7 +472,7 @@
                     { key: projectItem.id },
                     React.createElement(
                         'a',
-                        { href: '#!m/' + projectItem.id, title: projectItem.name },
+                        { href: '#!m/' + projectItem.id, title: projectItem.name, className: 'zw-waves' },
                         projectItem.name,
                         ' ',
                         React.createElement(SVGIconNext, null)
@@ -405,6 +483,21 @@
                 'ul',
                 { id: 'zw-project-list', className: 'zw-project-list' },
                 projects
+            );
+        }
+    });
+
+    var ZWProjectInfo = React.createClass({
+        displayName: 'ZWProjectInfo',
+
+        render: function render() {
+            return React.createElement(
+                'form',
+                { action: '', method: 'post' },
+                React.createElement(ZWFormRow, { labelTarget: 'zw-field-project-name--' + this.props.data.id, labelName: 'Name', fieldType: 'textarea', fieldValue: this.props.data.name, fieldName: 'zw-field-project-name', fieldId: 'zw-field-project-name--' + this.props.data.id }),
+                React.createElement(ZWFormRow, { labelTarget: 'zw-field-project-from--' + this.props.data.id, labelName: 'From', fieldType: 'text', fieldValue: ZWUtils.formatDateFull(this.props.data.from), fieldName: 'zw-field-project-from', fieldId: 'zw-field-project-from--' + this.props.data.id }),
+                React.createElement(ZWFormRow, { labelTarget: 'zw-field-project-pm--' + this.props.data.id, labelName: 'PM', fieldType: 'text', fieldValue: this.props.data.pm, fieldName: 'zw-field-project-pm', fieldId: 'zw-field-project-pm--' + this.props.data.id }),
+                React.createElement(ZWFormRow, { labelTarget: 'zw-field-project-note--' + this.props.data.id, labelName: 'Note', fieldType: 'textarea', fieldValue: this.props.data.note, fieldName: 'zw-field-project-note', fieldId: 'zw-field-project-note--' + this.props.data.id, placeholder: this.props.data.note === '' ? ZWUtils.locale('Insert note', 'en') : this.props.data.note })
             );
         }
     });
@@ -458,7 +551,7 @@
                 React.createElement(ZWCheckbox, { data: this.props.data.status }),
                 React.createElement(
                     'a',
-                    { className: 'zw-item-name', onClick: this.handleClick, href: '#' + this.props.data.id, title: this.props.data.name },
+                    { className: 'zw-item-name zw-waves', onClick: this.handleClick, href: '', title: this.props.data.name },
                     this.props.data.name
                 ),
                 React.createElement(
@@ -473,11 +566,6 @@
     var ZWDeliverable = React.createClass({
         displayName: 'ZWDeliverable',
 
-        viewAllTasks: function viewAllTasks(e) {
-            e.preventDefault();
-
-            ZWPubSub.pub('ZWPage:change', '#!d/' + this.props.data.id);
-        },
         render: function render() {
             return React.createElement(
                 'div',
@@ -490,9 +578,44 @@
                 React.createElement(ZWCheckbox, { data: this.props.data.status }),
                 React.createElement(
                     'a',
-                    { onClick: this.viewAllTasks, className: 'zw-item-name', href: '#' + this.props.data.id, title: this.props.data.name },
+                    { className: 'zw-item-name zw-waves', href: '#!d/' + this.props.data.id, title: this.props.data.name },
                     this.props.data.name
                 )
+            );
+        }
+    });
+
+    var ZWDeliverableInfo = React.createClass({
+        displayName: 'ZWDeliverableInfo',
+
+        render: function render() {
+            return React.createElement(
+                'form',
+                { action: '', method: 'post' },
+                React.createElement(ZWFormRow, { labelTarget: 'zw-field-deliverable-name--' + this.props.data.id, labelName: 'Name', fieldType: 'textarea', fieldValue: this.props.data.name, fieldName: 'zw-field-deliverable-name', fieldId: 'zw-field-deliverable-name--' + this.props.data.id }),
+                React.createElement(ZWFormRow, { labelTarget: 'zw-field-deliverable-due--' + this.props.data.id, labelName: 'Due date', fieldType: 'text', fieldValue: ZWUtils.formatDateFull(this.props.data.dueDate), fieldName: 'zw-field-deliverable-due', fieldId: 'zw-field-deliverable-due--' + this.props.data.id }),
+                React.createElement(ZWFormRow, { labelTarget: 'zw-field-deliverable-effort--' + this.props.data.effort, labelName: 'Effort', fieldType: 'text', fieldValue: this.props.data.effort, fieldName: 'zw-field-deliverable-effort', fieldId: 'zw-field-deliverable-effort--' + this.props.data.id }),
+                React.createElement(ZWFormRow, { labelTarget: 'zw-field-deliverable-note--' + this.props.data.id, labelName: 'Note', fieldType: 'textarea', fieldValue: this.props.data.note, fieldName: 'zw-field-deliverable-note', fieldId: 'zw-field-deliverable-note--' + this.props.data.id, placeholder: this.props.data.note === '' ? ZWUtils.locale('Insert note', 'en') : this.props.data.note })
+            );
+        }
+    });
+
+    var ZWTaskList = React.createClass({
+        displayName: 'ZWTaskList',
+
+        render: function render() {
+            var tasks = this.props.data.map(function (taskItem) {
+                return React.createElement(
+                    'li',
+                    { key: taskItem.id },
+                    React.createElement(ZWTask, { data: taskItem })
+                );
+            });
+
+            return React.createElement(
+                'ul',
+                { className: 'zw-list zw-tasks-list' },
+                tasks
             );
         }
     });
@@ -508,9 +631,6 @@
 
             this.setState({ expand: !this.state.expand });
         },
-        updateField: function updateField(e) {
-            console.log(e.target.value);
-        },
         render: function render() {
             return React.createElement(
                 'div',
@@ -523,83 +643,78 @@
                 React.createElement(ZWCheckbox, { data: this.props.data.status }),
                 React.createElement(
                     'a',
-                    { onClick: this.viewTaskDetails, className: 'zw-item-name', href: '#' + this.props.data.id, title: this.props.data.name },
+                    { onClick: this.viewTaskDetails, className: 'zw-item-name zw-waves', href: '', title: this.props.data.name },
                     this.props.data.name
                 ),
                 React.createElement(
                     'div',
                     { className: 'zw-task__details' + (this.state.expand ? '' : ' hidden') },
-                    React.createElement(
+                    this.state.expand ? React.createElement(
                         'form',
                         { action: this.props.data.id, method: 'post' },
-                        React.createElement(
-                            'p',
-                            null,
-                            React.createElement(
-                                'strong',
-                                null,
-                                'From:'
-                            ),
-                            ' ',
-                            React.createElement('input', { type: 'text', value: ZWUtils.formatDate(this.props.data.from), name: '', id: '', onChange: this.updateField })
-                        ),
-                        React.createElement(
-                            'p',
-                            null,
-                            React.createElement(
-                                'strong',
-                                null,
-                                'Deadline:'
-                            ),
-                            ' ',
-                            React.createElement('input', { type: 'text', value: ZWUtils.formatDate(this.props.data.dueDate), name: '', id: '', onChange: this.updateField })
-                        ),
-                        React.createElement(
-                            'p',
-                            null,
-                            React.createElement(
-                                'strong',
-                                null,
-                                'Effort:'
-                            ),
-                            ' ',
-                            React.createElement('input', { type: 'text', value: this.props.data.effort, name: '', id: '', onChange: this.updateField })
-                        ),
-                        React.createElement(
-                            'p',
-                            null,
-                            React.createElement(
-                                'strong',
-                                null,
-                                'Assign:'
-                            ),
-                            ' ',
-                            React.createElement('input', { type: 'text', value: this.props.data.assign, name: '', id: '', onChange: this.updateField })
-                        ),
-                        React.createElement(
-                            'div',
-                            null,
-                            React.createElement(
-                                'strong',
-                                null,
-                                'Note:'
-                            ),
-                            ' ',
-                            React.createElement('textarea', { className: '', value: this.props.data.note, onChange: this.updateField })
-                        ),
-                        React.createElement('hr', null),
-                        React.createElement(
-                            'div',
-                            { className: 'zw-task-comment-box' },
-                            React.createElement('textarea', { className: 'zw-task__comment', placeholder: ZWUtils.locale('Write comment here', 'en') }),
-                            React.createElement(
-                                'button',
-                                null,
-                                ZWUtils.locale('Post', 'en')
-                            )
-                        )
-                    )
+                        React.createElement(ZWFormRow, { labelTarget: 'zw-field-task-from--' + this.props.data.id, labelName: 'From', fieldType: 'text', fieldValue: ZWUtils.formatDateFull(this.props.data.from), fieldName: 'zw-field-task-from', fieldId: 'zw-field-task-from--' + this.props.data.id }),
+                        React.createElement(ZWFormRow, { labelTarget: 'zw-field-task-due--' + this.props.data.id, labelName: 'Due date', fieldType: 'text', fieldValue: ZWUtils.formatDateFull(this.props.data.dueDate), fieldName: 'zw-field-task-due', fieldId: 'zw-field-task-due--' + this.props.data.id }),
+                        React.createElement(ZWFormRow, { labelTarget: 'zw-field-task-effort--' + this.props.data.id, labelName: 'Effort', fieldType: 'text', fieldValue: this.props.data.effort, fieldName: 'zw-field-task-effort', fieldId: 'zw-field-task-effort--' + this.props.data.id }),
+                        React.createElement(ZWFormRow, { labelTarget: 'zw-field-task-assign--' + this.props.data.id, labelName: 'Assign', fieldType: 'text', fieldValue: this.props.data.assign, fieldName: 'zw-field-task-assign', fieldId: 'zw-field-task-assign--' + this.props.data.id, placeholder: this.props.data.assign === '' ? ZWUtils.locale('Assign to', 'en') : this.props.data.assign }),
+                        React.createElement(ZWFormRow, { labelTarget: 'zw-field-task-note--' + this.props.data.id, labelName: 'Note', fieldType: 'textarea', fieldValue: this.props.data.note, fieldName: 'zw-field-task-note', fieldId: 'zw-field-task-note--' + this.props.data.id, placeholder: this.props.data.note === '' ? ZWUtils.locale('Insert note', 'en') : this.props.data.note })
+                    ) : null
                 )
+            );
+        }
+    });
+
+    var ZWField = React.createClass({
+        displayName: 'ZWField',
+
+        getInitialState: function getInitialState() {
+            return { value: this.props.defaultValue };
+        },
+        updateField: function updateField(e) {
+            this.setState({ value: e.target.value });
+        },
+        render: function render() {
+            var field = null;
+            switch (this.props.type) {
+                case 'text':
+                    field = React.createElement('input', { type: 'text', placeholder: this.props.placeholder, value: this.state.value, name: this.props.name, id: this.props.id, onChange: this.updateField });
+                    break;
+                case 'password':
+                    field = React.createElement('input', { type: 'password', placeholder: this.props.placeholder, name: this.props.name, value: this.state.value, id: this.props.id, onChange: this.updateField });
+                    break;
+                case 'textarea':
+                    field = React.createElement(
+                        'div',
+                        { placeholder: this.props.placeholder, className: 'zw-textarea', contentEditable: 'true', id: this.props.id, onChange: this.updateField },
+                        this.state.value
+                    );
+                    break;
+            }
+            return React.createElement(
+                'div',
+                { className: 'zw-field' },
+                field
+            );
+        }
+    });
+
+    var ZWFormRow = React.createClass({
+        displayName: 'ZWFormRow',
+
+        handleFocus: function handleFocus(e) {
+            e.preventDefault();
+
+            $('#' + $(e.target).attr('for')).focus();
+        },
+        render: function render() {
+            return React.createElement(
+                'div',
+                { className: 'zw-form-row' },
+                this.props.labelTarget === undefined ? null : React.createElement(
+                    'label',
+                    { onClick: this.handleFocus, htmlFor: this.props.labelTarget },
+                    this.props.labelName
+                ),
+                React.createElement(ZWField, { type: this.props.fieldType, defaultValue: this.props.fieldValue, name: this.props.fieldName, id: this.props.fieldId, placeholder: this.props.placeholder })
             );
         }
     });
@@ -650,18 +765,24 @@
     /* end. Block/Instance */
 
     //entry
+    var zwAppDom = document.getElementById('zw-app');
     //Project dashboard view
     ZWPubSub.sub('ZWApp.Project:dashboard', function (data) {
-        React.render(React.createElement(ZWProjectDashboard, { id: data.id, url: data.url, pollInterval: data.pollInterval }), document.getElementById('zw-project'));
+        React.render(React.createElement(ZWProjectDashboardPage, { data: data }), zwAppDom);
     });
 
     //Milestone view
     ZWPubSub.sub('ZWApp.Project:milestone', function (data) {
-        React.render(React.createElement(ZWProject, { backLink: '#!/' + data.id, id: data.id, name: data.name, url: data.url, pollInterval: data.pollInterval }), document.getElementById('zw-project'));
+        React.render(React.createElement(ZWMilestonePage, { backLink: '#!/' + data.id, data: data }), zwAppDom);
     });
 
     //Deliverable view
     ZWPubSub.sub('ZWApp.Project:deliverable', function (data) {
-        React.render(React.createElement(ZWDeliverableList, { backLink: '#!m/' + data.pid, id: data.id, name: data.name, url: data.url, pollInterval: data.pollInterval }), document.getElementById('zw-project'));
+        React.render(React.createElement(ZWDeliverablePage, { backLink: '#!m/' + data.pid, data: data }), zwAppDom);
+    });
+
+    //Chat view
+    ZWPubSub.sub('ZWApp.Chat:app', function (data) {
+        React.render(React.createElement(ZWChatPage, { data: data }), zwAppDom);
     });
 })(jQuery, Backbone);

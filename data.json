@@ -37,7 +37,7 @@
                     "name": "Delivery 1: Finished design UI for all user pages",
                     "dueDate": "30-09-2015",
                     "effort": "6 days",
-                    "status": 1,
+                    "status": 0,
                     "tasks": 2
                 },
                 {
@@ -70,7 +70,7 @@
                     "name": "Delivery 1: Finished design UI for all user pages",
                     "dueDate": "30-09-2015",
                     "effort": "6 days",
-                    "status": 1,
+                    "status": 0,
                     "tasks": 2
                 },
                 {

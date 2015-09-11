@@ -2,13 +2,13 @@
     "tasks": [
         {
             "id": "T-4948",
-            "name": "Sketch wireframe",
+            "name": "Sketch wireframe 222",
             "from": "01-09-2015",
             "dueDate": "02-09-2015",
             "effort": "1 day",
             "status": 2,
             "assign": "VuLH",
-            "note": "Lorem ipsum dolor sit ame contectullo ariu thre on come lucio de lasilve on sectual cen flio"
+            "note": ""
         },
         {
             "id": "T-9848",
