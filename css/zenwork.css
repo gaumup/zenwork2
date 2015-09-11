@@ -216,13 +216,33 @@ a.zw-waves.zw-waves--clicked:after {
                 content: attr(placeholder);
                 display: block; /* For Firefox */
             }
+
+    .zw-img-btn {
+    }
+        .zw-img-btn button {
+            width: 100%;
+            height: 100%;
+            display: block;
+            position: absolute;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            border: none;
+            background: none;
+        }
+        .zw-img-btn .svg-icon {
+            z-index: 0;
+        }
+            .zw-img-btn .svg-icon path {
+            }
 /* end. Form */
 
 .zw-app {
     width: 100%;
     overflow: hidden;
 }
-    .zw-nav-bar {
+    .zw-top-bar {
         background: #008844;
         color: #fff;
         position: fixed;
@@ -233,7 +253,7 @@ a.zw-waves.zw-waves--clicked:after {
         z-index: 1000;
         line-height: 40px;
     }
-    .zw-nav-bar .zw-avatar-wrapper {
+    .zw-top-bar .zw-avatar-wrapper {
         float: right;
         width: 30px;
         height: 30px;
@@ -244,10 +264,11 @@ a.zw-waves.zw-waves--clicked:after {
         height: 40px;
         float: left;
         position: relative;
-        padding: 4px 0 0 0;
+        padding: 5px 0 0 0;
     }
         .zw-search-bar .zw-form-row {
             padding: 0;
+            border: none;
         }
             .zw-search-bar .zw-form-row .zw-field {
                 width: 100%;
@@ -255,38 +276,40 @@ a.zw-waves.zw-waves--clicked:after {
                 .zw-search-bar .zw-form-row .zw-field input {
                     display: block;
                     height: 30px;
-                    padding: 0 50px 0 10px;
+                    padding: 0 60px 0 10px;
                     border: none;
                 }
+            .zw-search-submit,
             .zw-clear-field {
-                width: 45px;
+                width: 30px;
                 height: 30px;
                 position: absolute;
                 top: 5px;
                 right: 0;
             }
-                .zw-clear-field button {
-                    width: 100%;
-                    height: 100%;
-                    display: block;
-                    position: absolute;
-                    z-index: 1;
-                    top: 0;
-                    left: 0;
-                    opacity: 0;
-                }
+            .zw-search-submit {
+                background: #116644;
+            }
+            .zw-clear-field {
+                right: 30px;
+                top: 6px;
+            }
+                .zw-search-submit .svg-icon,
                 .zw-clear-field .svg-icon {
                     width: 20px;
                     z-index: 0;
                 }
-                .zw-clear-field .svg-icon path {
+                    .zw-search-submit .svg-icon path {
+                        fill: #fff;
+                    }
+                    .zw-clear-field .svg-icon path {
                         fill: #ccc;
                     }
     
     /**
      * main nav
      */
-        .zw-main-nav {
+        .zw-nav-bar {
             position: fixed;
             bottom: 0;
             left: 0;
@@ -294,37 +317,60 @@ a.zw-waves.zw-waves--clicked:after {
             width: 100%;
             height: 50px;
             overflow: hidden;
+            background: #fff;
         }
-            .zw-main-nav li {
-                width: 50%;
+            .zw-add-btn {
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 25%;
                 height: 100%;
-                float: left;
+                background: #fff;
             }
-            .zw-main-nav li.zw-main-nav__item--alt {
-                width: 40px;
-                float: right;
-            }
-                .zw-main-nav li a {
-                    width: 100%;
-                    height: 100%;
-                    display: block;
-                    position: relative;
-                    background: #fff;
-                    border-bottom: 6px solid #fff;
-                }
-                .zw-main-nav li.zw-main-nav__item--active a {
-                    border-bottom-color: #008844;
-                }
-                .zw-main-nav li a .svg-icon {
-                    padding-top: 4px;
+                .zw-add-btn .svg-icon {
                     width: 30px;
                 }
-                    .zw-main-nav li a .svg-icon path {
-                        fill: #ccc;
+                    .zw-add-btn .svg-icon path {
+                        fill: #ff7799;
                     }
-                    .zw-main-nav li.zw-main-nav__item--active a .svg-icon path {
-                        fill: #008844;
+                .zw-main-nav {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+                .zw-main-nav li {
+                    width: 25%;
+                    height: 100%;
+                    float: left;
+                }
+                .zw-main-nav li.zw-main-nav__item--alt {
+                    width: 40px;
+                    float: right;
+                }
+                    .zw-main-nav li a {
+                        width: 100%;
+                        height: 100%;
+                        display: block;
+                        position: relative;
+                        background: #fff;
+                        border-bottom: 6px solid #fff;
                     }
+                    .zw-main-nav li.zw-main-nav__item--active a {
+                        border-bottom-color: #008844;
+                    }
+                    .zw-main-nav li a .svg-icon {
+                        padding-top: 4px;
+                        width: 30px;
+                    }
+                        .zw-main-nav li a .svg-icon path {
+                            fill: #ccc;
+                        }
+                        .zw-main-nav li.zw-main-nav__item--active a .svg-icon path {
+                            fill: #008844;
+                        }
 
     /**
      * pages
@@ -510,7 +556,7 @@ a.zw-waves.zw-waves--clicked:after {
             top: 0;
             left: 0;
             border-right: 3px solid #efefef;
-            width: 80px;
+            width: 60px;
             height: 100%;
         }
         .zw-list li {
@@ -529,15 +575,19 @@ a.zw-waves.zw-waves--clicked:after {
             left: 0;
             top: 0;
             z-index: 0;
-            padding: 22px 15px 0 0;
+            padding: 17px 0 0 0;
             font-size: 12px;
-            color: #ccc;
+            color: #999;
             display: block;
-            width: 75px;
+            width: 50px;
             height: 100%;
-            text-align: right;
             text-transform: uppercase;
+            text-align: center;
+            line-height: 12px;
         }
+            .zw-list .zw-timeline-date strong {
+                font-size: 18px;
+            }
         .zw-list .zw-item-status,
         .zw-list .zw-item-status:before {
             display: block;
@@ -564,7 +614,7 @@ a.zw-waves.zw-waves--clicked:after {
                 }
                 .zw-list .zw-milestone .zw-item-status {
                     top: 14px;
-                    left: 65px;
+                    left: 45px;
                     width: 31px;
                     height: 31px;
                     border: 1px solid transparent;
@@ -587,7 +637,7 @@ a.zw-waves.zw-waves--clicked:after {
                     display: none;
                 }
                 .zw-list .zw-milestone > .zw-item-name {
-                    padding: 20px 15px 20px 105px;
+                    padding: 20px 15px 20px 85px;
                     font-weight: bold;
                 }
 
@@ -602,13 +652,13 @@ a.zw-waves.zw-waves--clicked:after {
                 }
                 .zw-list .zw-deliverable .zw-timeline-date {
                     font-weight: normal;
-                    padding-top: 16px;
+                    padding-top: 12px;
                 }
                 .zw-list .zw-deliverable .zw-item-status {
                     width: 25px;
                     height: 25px;
                     top: 12px;
-                    left: 68px;
+                    left: 48px;
                 }
                 .zw-list .zw-deliverable .zw-item-status {
                     border: 1px solid #ccc;
@@ -630,7 +680,7 @@ a.zw-waves.zw-waves--clicked:after {
                     fill: #008844;
                 }
                 .zw-list .zw-deliverable > .zw-item-name {
-                    padding: 15px 15px 15px 130px;
+                    padding: 15px 15px 15px 110px;
                 }
 
         /*
@@ -644,7 +694,7 @@ a.zw-waves.zw-waves--clicked:after {
                 }
                 .zw-list .zw-task .zw-item-status {
                     top: 14px;
-                    left: 65px;
+                    left: 45px;
                     width: 31px;
                     height: 31px;
                     border: 1px solid transparent;
@@ -667,7 +717,7 @@ a.zw-waves.zw-waves--clicked:after {
                     display: none;
                 }
                 .zw-list .zw-task > .zw-item-name {
-                    padding: 20px 15px 20px 105px;
+                    padding: 20px 15px 20px 85px;
                     font-weight: bold;
                 }
                 .zw-task__details {
@@ -679,24 +729,46 @@ a.zw-waves.zw-waves--clicked:after {
                 }
 
     /**
-     * chat app
+     * message app
      */
-        .zw-chat-app {
+        .zw-message-app {
             position: relative;
             width: 100%;
         }
-            .zw-chat-app p {
+            .zw-message-app p {
                 font-size: 14px;
                 color: #666;
                 text-align: center;
                 padding: 10px 0 0;
             }
-            .zw-chat-app .svg-icon {
+            .zw-message-app .svg-icon {
                 width: 64px;
                 position: relative;
                 margin-top: 100px;
             }
-                .zw-chat-app .svg-icon path {
+                .zw-message-app .svg-icon path {
+                    fill: #008844;
+                }
+
+    /**
+     * message app
+     */
+        .zw-people-app {
+            position: relative;
+            width: 100%;
+        }
+            .zw-people-app p {
+                font-size: 14px;
+                color: #666;
+                text-align: center;
+                padding: 10px 0 0;
+            }
+            .zw-people-app .svg-icon {
+                width: 64px;
+                position: relative;
+                margin-top: 100px;
+            }
+                .zw-people-app .svg-icon path {
                     fill: #008844;
                 }
 

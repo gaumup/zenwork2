@@ -9,6 +9,16 @@
             getInitialState: function() {
                 return { items: [] };
             },
+            handleLoading: function() {
+                var node = $( React.findDOMNode(this) );
+                setTimeout(function() {
+                    node.addClass('zw-page-loading');
+                }, 1);
+            },
+            handleLoaded: function() {
+                var node = $( React.findDOMNode(this) );
+                node.removeClass('zw-page-loading')
+            },
             handleAdd: function(item) {
                 var newItems = this.state.items.concat( item );
                 this.setState( {items: newItems} );
@@ -25,6 +35,12 @@
                 this.setState( {items: newItems} );
             },
             componentDidMount: function() {
+                ZWPubSub.sub( 'ZWPageGroup:pageLoading', function() {
+                    this.handleLoading();
+                }.bind(this) );
+                ZWPubSub.sub( 'ZWPageGroup:pageLoaded', function() {
+                    this.handleLoaded();
+                }.bind(this) );
                 ZWPubSub.sub( 'ZWPageGroup:add', function(item) {
                     this.handleAdd( item );
                 }.bind(this) );
@@ -54,23 +70,18 @@
             getInitialState: function() {
                 return { expandContent: false };
             },
-            componentDidMount: function() {
-                var node = $( React.findDOMNode(this) );
-                node.parent().addClass('zw-page-loading');
-            },
             componentWillEnter: function(callback) {
                 setTimeout(function() {
+                    ZWPubSub.pub( 'ZWPageGroup:pageLoaded' );
                     callback();
                 }, 200);
             },
             componentDidEnter: function() {
                 var node = $( React.findDOMNode(this) );
-                node
-                    .addClass('fly-in-enter')
-                    .parent().removeClass('zw-page-loading');
+                node.addClass('fly-in-enter');
 
                 //binding waves effect when click on link
-                    $('.zw-waves').on('click', function(e) {
+                    node.find('.zw-waves').on('click', function(e) {
                         e.preventDefault();
 
                         var $this = $(this);
@@ -85,9 +96,9 @@
                     });
 
                 //listen for events
-                ZWPubSub.sub( 'ZWTextEllipsis:toggle', function(e) {
-                    this.setState( { expandContent: !this.state.expandContent } );
-                }.bind(this) );
+                    ZWPubSub.sub( 'ZWTextEllipsis:toggle', function(e) {
+                        this.setState( { expandContent: !this.state.expandContent } );
+                    }.bind(this) );
             },
             render: function() {
                 var header = this.props.showHeader
@@ -115,216 +126,168 @@
 
     /* Page */
         var ZWMasterPage = React.createClass({
+            init: false,
+            dataInterval: undefined,
+            request: undefined,
+            loadDataFromServer: function() {
+                this.request = $.ajax({
+                    url: this.props.data.url,
+                    dataType: 'json',
+                    cache: false,
+                    success: function(response) {
+                        var data = this.props.dataProcess.call( null, response );
+                        if ( !this.init ) {
+                            this.init = true;
+                            ZWPubSub.pub( 'ZWPageGroup:add', data );
+                        }
+                        else { //update
+                            ZWPubSub.pub( 'ZWPageGroup:update', data );
+                        }
+                    }.bind(this),
+                    error: function(xhr, status, err) {
+                        ZWThrow( xhr, status, err );
+                    }.bind(this)
+                });
+            },
+            componentDidMount: function() { //default call when rendered
+                ZWPubSub.pub( 'ZWPageGroup:pageLoading' );
+                this.loadDataFromServer();
+                ZWPubSub.sub( 'ZWPage:leave', function() {
+                    if ( this.request !== undefined ) {
+                        this.request.abort();
+                    }
+
+                    if ( this.dataInterval !== undefined ) {
+                        clearInterval( this.dataInterval );
+                    }
+                }.bind(this) );
+                if ( this.props.data.pollInterval > 0 ) {
+                    this.dataInterval = setInterval(this.loadDataFromServer, this.props.data.pollInterval);
+                }
+            },
             render: function() {
                 return (
                     <div>
-                        <ZWNavBar active={ this.props.active } uid="1" />
+                        <ZWTopBar />
                         <ZWPageGroup />
-                        <ZWNav active={ this.props.active } />
+                        <ZWNavBar active={ this.props.active } />
                     </div>
                 );
             }
         });
         var ZWProjectDashboardPage = React.createClass({
-            init: false,
-            dataInterval: undefined,
-            loadDataFromServer: function() {
-                $.ajax({
-                    url: this.props.data.url,
-                    dataType: 'json',
-                    cache: false,
-                    success: function(response) {
-                        var data = {
-                            key: this.props.data.id,
-                            showHeader: false,
-                            headerTitle: '',
-                            content: <ZWProjectList data={ response.projects } />,
-                            customClass: ''
-                        };
-                        if ( !this.init ) {
-                            this.init = true;
-                            ZWPubSub.pub( 'ZWPageGroup:add', data );
-                        }
-                        else { //update
-                            ZWPubSub.pub( 'ZWPageGroup:update', data );
-                        }
-                    }.bind(this),
-                    error: function(xhr, status, err) {
-                        console.error(this.props.url, status, err.toString());
-                    }.bind(this)
-                });
-            },
-            componentDidMount: function() { //default call when rendered
-                this.loadDataFromServer();
-                if ( this.props.data.pollInterval > 0 ) {
-                    this.dataInterval = setInterval(this.loadDataFromServer, this.props.data.pollInterval);
-                    ZWPubSub.sub( 'ZWPage:leave', function() {
-                        clearInterval( this.dataInterval );
-                    }.bind(this) );
-                }
+            dataProcess: function(response) {
+                return {
+                    key: this.props.data.id,
+                    showHeader: false,
+                    headerTitle: '',
+                    content: <ZWProjectList data={ response.projects } />,
+                    customClass: ''
+                };
             },
             render: function() {
                 return (
-                    <ZWMasterPage active="0" />
+                    <ZWMasterPage active="0" data={ this.props.data } dataProcess={ this.dataProcess } />
                 );
             }
         });
         var ZWMilestonePage = React.createClass({
-            init: false,
-            dataInterval: undefined,
-            loadDataFromServer: function() {
-                $.ajax({
-                    url: this.props.data.url,
-                    dataType: 'json',
-                    cache: false,
-                    success: function(response) {
-                        var projectData = {
-                            id: this.props.data.id,
-                            from: this.props.data.from,
-                            name: this.props.data.name,
-                            pm: this.props.data.pm,
-                            note: this.props.data.note
-                        };
-                        var data = {
-                            backLink: this.props.backLink,
-                            key: this.props.data.id,
-                            showHeader: true,
-                            headerTitle: this.props.data.name,
-                            content: <ZWList data={ response.milestones } />,
-                            expandContent: <ZWProjectInfo data={ projectData } />,
-                            customClass: ''
-                        };
-                        if ( !this.init ) {
-                            this.init = true;
-                            ZWPubSub.pub( 'ZWPageGroup:add', data );
-                        }
-                        else { //update
-                            ZWPubSub.pub( 'ZWPageGroup:update', data );
-                        }
-                    }.bind(this),
-                    error: function(xhr, status, err) {
-                        console.error(this.props.url, status, err.toString());
-                    }.bind(this)
-                });
-            },
-            componentDidMount: function() { //default call when rendered
-                this.loadDataFromServer();
-                if ( this.props.data.pollInterval > 0 ) {
-                    this.dataInterval = setInterval(this.loadDataFromServer, this.props.data.pollInterval);
-                    ZWPubSub.sub( 'ZWPage:leave', function() {
-                        clearInterval( this.dataInterval );
-                    }.bind(this) );
-                }
+            dataProcess: function(response) {
+                var projectData = {
+                    id: this.props.data.id,
+                    from: this.props.data.from,
+                    name: this.props.data.name,
+                    pm: this.props.data.pm,
+                    note: this.props.data.note
+                };
+                return {
+                    backLink: this.props.backLink,
+                    key: this.props.data.id,
+                    showHeader: true,
+                    headerTitle: this.props.data.name,
+                    content: <ZWList data={ response.milestones } />,
+                    expandContent: <ZWProjectInfo data={ projectData } />,
+                    customClass: ''
+                };
             },
             render: function() {
                 return (
-                    <ZWMasterPage active="0" />
+                    <ZWMasterPage active="0" data={ this.props.data } dataProcess={ this.dataProcess } />
                 );
             }
         });
         var ZWDeliverablePage = React.createClass({
-            init: false,
-            dataInterval: undefined,
-            loadDataFromServer: function() {
-                $.ajax({
-                    url: this.props.data.url,
-                    dataType: 'json',
-                    cache: false,
-                    success: function(response) {
-                        var deliverableData = {
-                            id: this.props.data.id,
-                            dueDate: this.props.data.dueDate,
-                            name: this.props.data.name,
-                            effort: this.props.data.effort,
-                            note: this.props.data.note
-                        };
-                        var data = {
-                            backLink: this.props.backLink,
-                            key: this.props.data.id,
-                            showHeader: true,
-                            headerTitle: this.props.data.name,
-                            content: <ZWTaskList data={ response.tasks } />,
-                            expandContent: <ZWDeliverableInfo data={ deliverableData } />,
-                            customClass: ''
-                        };
-                        if ( !this.init ) {
-                            this.init = true;
-                            ZWPubSub.pub( 'ZWPageGroup:add', data );
-                        }
-                        else { //update
-                            ZWPubSub.pub( 'ZWPageGroup:update', data );
-                        }
-                    }.bind(this),
-                    error: function(xhr, status, err) {
-                        console.error(this.props.data.url, status, err.toString());
-                    }.bind(this)
-                });
-            },
-            componentDidMount: function() { //default call when rendered
-                this.loadDataFromServer();
-                if ( this.props.data.pollInterval > 0 ) {
-                    this.dataInterval = setInterval(this.loadDataFromServer, this.props.data.pollInterval);
-                    ZWPubSub.sub( 'ZWPage:leave', function() {
-                        clearInterval( this.dataInterval );
-                    }.bind(this) );
-                }
+            dataProcess: function(response) {
+                var deliverableData = {
+                    id: this.props.data.id,
+                    dueDate: this.props.data.dueDate,
+                    name: this.props.data.name,
+                    effort: this.props.data.effort,
+                    note: this.props.data.note
+                };
+                return {
+                    backLink: this.props.backLink,
+                    key: this.props.data.id,
+                    showHeader: true,
+                    headerTitle: this.props.data.name,
+                    content: <ZWTaskList data={ response.tasks } />,
+                    expandContent: <ZWDeliverableInfo data={ deliverableData } />,
+                    customClass: ''
+                };
             },
             render: function() {
                 return (
-                    <ZWMasterPage active="0" />
+                    <ZWMasterPage active="0" data={ this.props.data } dataProcess={ this.dataProcess } />
                 );
             }
         });
-        var ZWChatPage = React.createClass({
-            init: false,
-            dataInterval: undefined,
-            loadDataFromServer: function() {
-                $.ajax({
-                    url: this.props.data.url,
-                    dataType: 'json',
-                    cache: false,
-                    success: function(response) {
-                        var data = {
-                            key: this.props.data.id,
-                            showHeader: false,
-                            content: <ZWChat data={ response } />
-                        };
-                        if ( !this.init ) {
-                            this.init = true;
-                            ZWPubSub.pub( 'ZWPageGroup:add', data );
-                        }
-                        else { //update
-                            ZWPubSub.pub( 'ZWPageGroup:update', data );
-                        }
-                    }.bind(this),
-                    error: function(xhr, status, err) {
-                        console.error(this.props.data.url, status, err.toString());
-                    }.bind(this)
-                });
-            },
-            componentDidMount: function() { //default call when rendered
-                this.loadDataFromServer();
-                if ( this.props.data.pollInterval > 0 ) {
-                    this.dataInterval = setInterval(this.loadDataFromServer, this.props.data.pollInterval);
-                    ZWPubSub.sub( 'ZWPage:leave', function() {
-                        clearInterval( this.dataInterval );
-                    }.bind(this) );
-                }
+        var ZWMessagePage = React.createClass({
+            dataProcess: function(response) {
+                return {
+                    key: this.props.data.id,
+                    showHeader: false,
+                    content: <ZWMessage data={ response } />
+                };
             },
             render: function() {
                 return (
-                    <ZWMasterPage active="1" />
+                    <ZWMasterPage active="1" data={ this.props.data } dataProcess={ this.dataProcess } />
+                );
+            }
+        });
+        var ZWPeoplePage = React.createClass({
+            dataProcess: function(response) {
+                return {
+                    key: this.props.data.id,
+                    showHeader: false,
+                    content: <ZWPeople data={ response } />
+                };
+            },
+            render: function() {
+                return (
+                    <ZWMasterPage active="2" data={ this.props.data } dataProcess={ this.dataProcess } />
                 );
             }
         });
     /* end. Page */
 
     /* Block/Instance */
-        var ZWChat = React.createClass({
+        var ZWMessage = React.createClass({
             render: function() {
                 return (
-                    <div className="zw-chat-app">
+                    <div className="zw-message-app">
                         <SVGIconMessage />
+                        <p>{ ZWUtils.locale( 'Comming soon', 'us' ) }</p>
+                    </div>
+                );
+            }
+        });
+
+        var ZWPeople = React.createClass({
+            render: function() {
+                return (
+                    <div className="zw-people-app">
+                        <SVGIconPeople />
                         <p>{ ZWUtils.locale( 'Comming soon', 'us' ) }</p>
                     </div>
                 );
@@ -351,6 +314,33 @@
             }
         });
 
+        var ZWTimelineDate = React.createClass({
+            render: function() {
+                var date = this.props.date.split('-');
+                return (
+                    <span className="zw-timeline-date">
+                        <strong>{ date[0] }</strong>
+                        <br />
+                        { date[1] }
+                    </span>
+                );
+            }
+        });
+
+        var ZWNavBar = React.createClass({
+            handleClick: function(e) {
+                e.preventDefault();
+            },
+            render: function() {
+                return (
+                    <div className="zw-nav-bar">
+                        <ZWNav active={ this.props.active } />
+                        <a href="" title="" onClick={ this.handleClick } className="zw-add-btn"><SVGIconAdd /></a>
+                    </div>
+                );
+            }
+        });
+
         var ZWNav = React.createClass({
             getInitialState: function() {
                 return ( { active: '0' } );
@@ -361,20 +351,21 @@
             render: function() {
                 return (
                     <ul className="zw-main-nav">
-                        <li className={ 'zw-main-nav__item' + ( this.state.active === '0' ? ' zw-main-nav__item--active' : '' ) }><a href={ '#!/' + this.props.uid } title="Project"><SVGIconProject /></a></li>
-                        <li className={ 'zw-main-nav__item' + ( this.state.active === '1' ? ' zw-main-nav__item--active' : '' ) }><a href={ '#!chat/' + this.props.uid } title="Message"><SVGIconMessage /></a></li>
+                        <li className={ 'zw-main-nav__item' + ( this.state.active === '0' ? ' zw-main-nav__item--active' : '' ) }><a href="#!" title="Project"><SVGIconProject /></a></li>
+                        <li className={ 'zw-main-nav__item' + ( this.state.active === '1' ? ' zw-main-nav__item--active' : '' ) }><a href="#!mc" title="Message"><SVGIconMessage /></a></li>
+                        <li className={ 'zw-main-nav__item' + ( this.state.active === '2' ? ' zw-main-nav__item--active' : '' ) }><a href="#!p" title="People"><SVGIconPeople /></a></li>
                     </ul>
                 );
             }
         });
 
-        var ZWNavBar = React.createClass({
+        var ZWTopBar = React.createClass({
             render: function() {
                 return (
-                    <div className="zw-nav-bar">
+                    <div className="zw-top-bar">
                         <h1>zenwork</h1>
                         <ZWSearchBar />
-                        <a className="zw-avatar-wrapper" href="#!/1" title=""><SVGIconAvatar image="images/avatar.jpg" /></a>
+                        <a className="zw-avatar-wrapper" href="#!" title=""><SVGIconAvatar image="images/avatar.jpg" /></a>
                     </div>
                 );
             }
@@ -384,14 +375,18 @@
             handleSubmit: function(e) {
                 e.preventDefault();
             },
+            handleFocus: function(e) {
+            },
+            handleBlur: function(e) {
+            },
             render: function() {
                 return (
                     <div className="zw-search-bar">
                         <form action="" method="post" onSubmit={ this.handleSubmit }>
-                            <ZWFormRow fieldType="text" fieldName="zw-field-search" fieldId="zw-field-search" placeholder="Search" />
-                            <div className="zw-clear-field">
-                                <button type="reset"></button>
-                                <SVGIconRemove />
+                            <ZWFormRow fieldType="text" fieldName="zw-field-search" fieldId="zw-field-search" placeholder="Search" focusHandler={ this.handleFocus } blurHandler={ this.handleBlur } />
+                            <div className="zw-img-btn zw-search-submit">
+                                <button type="submit"></button>
+                                <SVGIconSearch />
                             </div>
                         </form>
                     </div>
@@ -466,9 +461,7 @@
                 });
                 return (
                     <div className="zw-milestone">
-                        <span className="zw-timeline-date">
-                            { ZWUtils.formatDate(this.props.data.dueDate) }
-                        </span>
+                        <ZWTimelineDate date={ ZWUtils.formatDate(this.props.data.dueDate) } />
                         <ZWCheckbox data={ this.props.data.status } />
                         <a className="zw-item-name zw-waves" onClick={ this.handleClick } href="" title={ this.props.data.name }>{ this.props.data.name }</a>
 
@@ -484,9 +477,7 @@
             render: function() {
                 return (
                     <div className="zw-deliverable">
-                        <span className="zw-timeline-date">
-                            { ZWUtils.formatDate(this.props.data.dueDate) }
-                        </span>
+                        <ZWTimelineDate date={ ZWUtils.formatDate(this.props.data.dueDate) } />
                         <ZWCheckbox data={ this.props.data.status } />
                         <a className="zw-item-name zw-waves" href={ '#!d/' + this.props.data.id } title={ this.props.data.name }>{ this.props.data.name }</a>
                     </div>
@@ -540,9 +531,7 @@
             render: function() {
                 return (
                     <div className="zw-task">
-                        <span className="zw-timeline-date">
-                            { ZWUtils.formatDate(this.props.data.dueDate) }
-                        </span>
+                        <ZWTimelineDate date={ ZWUtils.formatDate(this.props.data.dueDate) } />
                         <ZWCheckbox data={ this.props.data.status } />
                         <a onClick={ this.viewTaskDetails } className="zw-item-name zw-waves" href="" title={ this.props.data.name }>{ this.props.data.name }</a>
 
@@ -570,14 +559,24 @@
             updateField: function(e) {
                 this.setState( { value: e.target.value } );
             },
+            handleFocus: function(e) {
+                if ( this.props.focusHandler !== undefined ) {
+                    this.props.focusHandler.call( null, e );
+                }
+            },
+            handleBlur: function(e) {
+                if ( this.props.blurHandler !== undefined ) {
+                    this.props.blurHandler.call( null, e );
+                }
+            },
             render: function() {
                 var field = null;
                 switch ( this.props.type ) {
                     case 'text':
-                        field = <input type="text" placeholder={ this.props.placeholder } value={ this.state.value } name={ this.props.name } id={ this.props.id } onChange={ this.updateField } />;
+                        field = <input type="text" placeholder={ this.props.placeholder } value={ this.state.value } name={ this.props.name } id={ this.props.id } onChange={ this.updateField } onFocus={ this.handleFocus } onBlur={ this.handleBlur } />;
                         break;
                     case 'password':
-                        field = <input type="password" placeholder={ this.props.placeholder } name={ this.props.name } value={ this.state.value } id={ this.props.id } onChange={ this.updateField } />;
+                        field = <input type="password" placeholder={ this.props.placeholder } name={ this.props.name } value={ this.state.value } id={ this.props.id } onChange={ this.updateField } onFocus={ this.handleFocus } onBlur={ this.handleBlur } />;
                         break;
                     case 'textarea':
                         field = <div placeholder={ this.props.placeholder } className="zw-textarea" contentEditable="true" id={ this.props.id } onChange={ this.updateField }>{ this.state.value }</div>
@@ -604,7 +603,7 @@
                             ? null
                             : <label onClick={ this.handleFocus } htmlFor={ this.props.labelTarget }>{ this.props.labelName }</label>
                         }
-                        <ZWField type={ this.props.fieldType } defaultValue={ this.props.fieldValue } name={ this.props.fieldName } id={ this.props.fieldId } placeholder={ this.props.placeholder } />
+                        <ZWField focusHandler={ this.props.focusHandler } blurHandler={ this.props.blurHandler } type={ this.props.fieldType } defaultValue={ this.props.fieldValue } name={ this.props.fieldName } id={ this.props.fieldId } placeholder={ this.props.placeholder } />
                     </div>
                 );
             }
@@ -666,7 +665,7 @@
         //Milestone view
         ZWPubSub.sub( 'ZWApp.Project:milestone', function(data) {
             React.render(
-                <ZWMilestonePage backLink={ '#!/' + data.id } data={ data } />,
+                <ZWMilestonePage backLink="#!" data={ data } />,
                 zwAppDom
             );
         } );
@@ -679,10 +678,18 @@
             );
         } );
 
-        //Chat view
-        ZWPubSub.sub( 'ZWApp.Chat:app', function(data) {
+        //Message view
+        ZWPubSub.sub( 'ZWApp.Message:app', function(data) {
             React.render(
-                <ZWChatPage data={ data } />,
+                <ZWMessagePage data={ data } />,
+                zwAppDom
+            );
+        } );
+
+        //People view
+        ZWPubSub.sub( 'ZWApp.People:app', function(data) {
+            React.render(
+                <ZWPeoplePage data={ data } />,
                 zwAppDom
             );
         } );

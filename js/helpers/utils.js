@@ -172,30 +172,37 @@
 
 /* Zenwork globals */
     //utilities function
-    var ZWUtils = {
-        formatDate: function(/*dd-mm-yyyy*/dateStr, /*default=en*/lang) {
-            var lang  = lang === undefined ? 'en' : lang;
-            var locale = {
-                vi: ['T01', 'T02', 'T03', 'T04', 'T05', 'T06', 'T07', 'T08', 'T09', 'T10', 'T11', 'T12'],
-                en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        var ZWUtils = {
+            formatDate: function(/*dd-mm-yyyy*/dateStr, /*default=en*/lang) {
+                var lang  = lang === undefined ? 'en' : lang;
+                var locale = {
+                    vi: ['T01', 'T02', 'T03', 'T04', 'T05', 'T06', 'T07', 'T08', 'T09', 'T10', 'T11', 'T12'],
+                    en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                }
+                var dateObj = dateStr.split('-');
+                return dateObj[0] + '-' + locale[lang][ parseInt(dateObj[1]) - 1 ];
+            },
+            formatDateFull: function(/*dd-mm-yyyy*/dateStr, /*default=en*/lang) {
+                var lang  = lang === undefined ? 'en' : lang;
+                var locale = {
+                    vi: ['T01', 'T02', 'T03', 'T04', 'T05', 'T06', 'T07', 'T08', 'T09', 'T10', 'T11', 'T12'],
+                    en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                }
+                var dateObj = dateStr.split('-');
+                return dateObj[0] + '-' + locale[lang][ parseInt(dateObj[1]) - 1 ] + '-' + dateObj[2];
+            },
+            locale: function(str, lang) {
+                return str;
             }
-            var dateObj = dateStr.split('-');
-            return dateObj[0] + '-' + locale[lang][ parseInt(dateObj[1]) - 1 ];
-        },
-        formatDateFull: function(/*dd-mm-yyyy*/dateStr, /*default=en*/lang) {
-            var lang  = lang === undefined ? 'en' : lang;
-            var locale = {
-                vi: ['T01', 'T02', 'T03', 'T04', 'T05', 'T06', 'T07', 'T08', 'T09', 'T10', 'T11', 'T12'],
-                en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        };
+
+    //exception
+        var ZWThrow = function(xhr, status, err) {
+            if ( status !== 'abort' ) {
+                console.error( xhr, status, err.toString() );
             }
-            var dateObj = dateStr.split('-');
-            return dateObj[0] + '-' + locale[lang][ parseInt(dateObj[1]) - 1 ] + '-' + dateObj[2];
-        },
-        locale: function(str, lang) {
-            return str;
         }
-    };
 
     //pub/sub
-    var ZWPubSub = {};
-    window['ZW_Pattern'].Mediator.installTo( ZWPubSub );
+        var ZWPubSub = {};
+        window['ZW_Pattern'].Mediator.installTo( ZWPubSub );

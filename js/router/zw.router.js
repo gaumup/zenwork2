@@ -10,11 +10,13 @@
     };
     var ZWRouter = new ( Backbone.Router.extend({
         routes: {
-            '!/:query': 'dashboard', // #!/{user id}, show projects list dashboard
+            '': 'dashboard', // show projects list dashboard
+            '!': 'dashboard', // show projects list dashboard
             '!m/:query': 'milestone', // #!m/{project id}, show project's milestones list
             '!d/:query': 'deliverable', // #!d/{deliverable id}, show milestone's deliverables
             '!t': 'task', // #t/{task id}, show task details
-            '!chat/:query': 'chat' // #!/{user id}/chat, show chat page
+            '!mc': 'message', // #!mc, show message center page
+            '!p': 'people' // #!p, show contact people page
         },
 
         initialize: function() {
@@ -31,10 +33,10 @@
             if ( callback ) { callback.apply( this, args ) };
         },
 
-        dashboard: function(uid) {
+        dashboard: function() {
             //show projects list
             var data = $.extend( true, {}, ZWConfig, {
-                id: uid,
+                id: 'zenwork.dashboard',
                 url: 'projects.json'
             } );
             ZWPubSub.pub( 'ZWApp.Project:dashboard', data );
@@ -74,12 +76,20 @@
             //show tasks details
         },
 
-        chat: function(uid) {
+        message: function() {
             var data = $.extend( true, {}, ZWConfig, {
-                id: uid,
+                id: 'zenwork.message',
                 url: 'chat.json'
             } );
-            ZWPubSub.pub( 'ZWApp.Chat:app', data );
+            ZWPubSub.pub( 'ZWApp.Message:app', data );
+        },
+
+        people: function() {
+            var data = $.extend( true, {}, ZWConfig, {
+                id: 'zenwork.people',
+                url: 'people.json'
+            } );
+            ZWPubSub.pub( 'ZWApp.People:app', data );
         }
     }) )();
 
